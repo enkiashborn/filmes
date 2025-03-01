@@ -4,8 +4,7 @@ import random
 import time
 
 st.set_page_config(
-    layout="wide",
-    page_title="spotify songs"
+    page_title="ffilmes e séries"
 )
 
 
