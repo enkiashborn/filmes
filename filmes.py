@@ -74,7 +74,7 @@ def buscar_por_nome(nome, tipo):
         "api_key": API_KEY,
         "language": "pt-BR",
         "query": nome,
-        "page": 1, 1000
+        "page": 1
     }
     response = requests.get(url, params=params)
     
