@@ -58,7 +58,7 @@ def buscar_filmes_por_genero(genero_id):
         "language": "pt-BR",  # Para resultados em português
         "with_genres": genero_id,
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 5)  # Busca até 5 páginas
+        "page": random.randint(1, 100)  # Busca até 1005 páginas
     }
     response = requests.get(url, params=params)
     
@@ -76,7 +76,7 @@ def buscar_series_por_genero(genero_id):
         "language": "pt-BR",  # Para resultados em português
         "with_genres": genero_id,
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 5)  # Busca até 5 páginas
+        "page": random.randint(1, 100)  # Busca até 100 páginas
     }
     response = requests.get(url, params=params)
     
@@ -169,7 +169,7 @@ if st.button("Escolher aleatoriamente"):
         params = {
             "api_key": API_KEY,
             "language": "pt-BR",
-            "page": random.randint(1, 5)  # Busca até 5 páginas
+            "page": random.randint(1, 100)  # Busca até 100 páginas
         }
         response = requests.get(url, params=params)
         
@@ -185,7 +185,7 @@ if st.button("Escolher aleatoriamente"):
         params = {
             "api_key": API_KEY,
             "language": "pt-BR",
-            "page": random.randint(1, 5)  # Busca até 5 páginas
+            "page": random.randint(1, 100)  # Busca até 100 páginas
         }
         response = requests.get(url, params=params)
         
