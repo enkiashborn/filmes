@@ -17,7 +17,7 @@ def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id):
         "with_watch_providers": plataforma_id,
         "watch_region": "BR",  # Filtra por provedores no Brasil
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 5)  # Busca até 5 páginas
+        "page": random.randint(1, 200)  # Busca até 200 páginas
     }
     response = requests.get(url, params=params)
     
@@ -37,7 +37,7 @@ def buscar_series_por_genero_e_plataforma(genero_id, plataforma_id):
         "with_watch_providers": plataforma_id,
         "watch_region": "BR",  # Filtra por provedores no Brasil
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 5)  # Busca até 5 páginas
+        "page": random.randint(1, 200)  # Busca até 200 páginas
     }
     response = requests.get(url, params=params)
     
