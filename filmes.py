@@ -152,7 +152,7 @@ def roleta(lista, tipo_aleatorio, placeholder):
         st.image(f"https://image.tmdb.org/t/p/w500{escolha_final['poster_path']}", width=300)
 
 # Título do aplicativo
-st.title("Escolhe o que vc quer assistir gatinha 😻")
+st.title("👾 Escolhe ai gatinha 👾")
 
 # Opção de escolha aleatória no centro da tela
 st.write("---")
