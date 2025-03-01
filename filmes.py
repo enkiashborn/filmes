@@ -4,7 +4,7 @@ import random
 import time
 
 st.set_page_config(
-    page_title="ffilmes e séries"
+    page_title="filmes e séries"
 )
 
 
