@@ -3,67 +3,21 @@ import requests
 import random
 import time
 
-st.set_page_config(
-    page_title="filmes e séries"
-)
-
-
-# Configuração do fundo preto e cores dos textos/botões
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: black;
-        color: white;
-    }
-    .stButton>button {
-        color: white;
-        background-color: #FF4B4B;
-        border-radius: 10px;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    .stButton>button:hover {
-        background-color: #FF0000;
-    }
-    .stRadio>div {
-        background-color: black;
-        padding: 10px;
-        border-radius: 10px;
-    }
-    .stRadio>div>label>div {
-        color: white;
-    }
-    .stSelectbox>div>div>select {
-        color: white;
-        background-color: #333333;
-    }
-    .stSelectbox>div>div>div {
-        color: white;
-        background-color: #333333;
-    }
-    .stSelectbox>div>div>div:hover {
-        background-color: #444444;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Sua chave de API do TMDb
 API_KEY = "d78f9edcc46b81eeaaf33881876d449e"  # Substitua pela sua chave de API
 BASE_URL = "https://api.themoviedb.org/3"
 
-# Função para buscar filmes por gênero
-def buscar_filmes_por_genero(genero_id):
+# Função para buscar filmes por gênero e plataforma
+def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id):
     url = f"{BASE_URL}/discover/movie"
     params = {
         "api_key": API_KEY,
         "language": "pt-BR",  # Para resultados em português
         "with_genres": genero_id,
+        "with_watch_providers": plataforma_id,
+        "watch_region": "BR",  # Filtra por provedores no Brasil
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 100)  # Busca até 1005 páginas
+        "page": random.randint(1, 5)  # Busca até 5 páginas
     }
     response = requests.get(url, params=params)
     
@@ -73,15 +27,17 @@ def buscar_filmes_por_genero(genero_id):
         st.error(f"Erro ao buscar filmes. Código de status: {response.status_code}")
         return []
 
-# Função para buscar séries por gênero
-def buscar_series_por_genero(genero_id):
+# Função para buscar séries por gênero e plataforma
+def buscar_series_por_genero_e_plataforma(genero_id, plataforma_id):
     url = f"{BASE_URL}/discover/tv"
     params = {
         "api_key": API_KEY,
         "language": "pt-BR",  # Para resultados em português
         "with_genres": genero_id,
+        "with_watch_providers": plataforma_id,
+        "watch_region": "BR",  # Filtra por provedores no Brasil
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 100)  # Busca até 100 páginas
+        "page": random.randint(1, 5)  # Busca até 5 páginas
     }
     response = requests.get(url, params=params)
     
@@ -91,16 +47,35 @@ def buscar_series_por_genero(genero_id):
         st.error(f"Erro ao buscar séries. Código de status: {response.status_code}")
         return []
 
-# Dicionário de gêneros (IDs do TMDb)
-GENEROS = {
-    "Ação": 28,
-    "Comédia": 35,
-    "Terror": 27,
-    "Drama": 18,
-    "Ficção Científica": 878,
-    "Animação": 16,
-    "Romance": 10749
-}
+# Função para buscar filmes/séries pelo nome
+def buscar_por_nome(nome, tipo):
+    url = f"{BASE_URL}/search/{'movie' if tipo == 'Filme' else 'tv'}"
+    params = {
+        "api_key": API_KEY,
+        "language": "pt-BR",
+        "query": nome,
+        "page": 1
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        return response.json()["results"]
+    else:
+        st.error(f"Erro ao buscar {tipo.lower()}. Código de status: {response.status_code}")
+        return []
+
+# Função para buscar plataformas de streaming
+def buscar_plataformas(tipo, id):
+    url = f"{BASE_URL}/{tipo}/{id}/watch/providers"
+    params = {
+        "api_key": API_KEY
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.json().get("results", {}).get("BR", {})  # Dados para o Brasil
+    else:
+        st.error(f"Erro ao buscar plataformas. Código de status: {response.status_code}")
+        return {}
 
 # Função para simular a roleta
 def roleta(lista, tipo_aleatorio, placeholder):
@@ -155,9 +130,70 @@ def roleta(lista, tipo_aleatorio, placeholder):
     # Exibe a imagem do filme/série escolhido
     if escolha_final.get("poster_path"):
         st.image(f"https://image.tmdb.org/t/p/w500{escolha_final['poster_path']}", width=300)
+    
+    # Exibe as plataformas de streaming
+    plataformas = buscar_plataformas("movie" if tipo_aleatorio == "Filme" else "tv", escolha_final["id"])
+    if plataformas:
+        st.write("### Plataformas de Streaming")
+        if plataformas.get("flatrate"):
+            st.write("Disponível em:")
+            for provider in plataformas["flatrate"]:
+                st.write(f"- {provider['provider_name']}")
+        else:
+            st.write("Não disponível em streaming no momento.")
+
+# Dicionário de gêneros (IDs do TMDb)
+GENEROS = {
+    "Ação": 28,
+    "Comédia": 35,
+    "Terror": 27,
+    "Drama": 18,
+    "Ficção Científica": 878,
+    "Animação": 16,
+    "Romance": 10749
+}
+
+# Dicionário de plataformas (IDs do TMDb)
+PLATAFORMAS = {
+    "Todas as Plataformas": None,  # Opção para buscar em todas as plataformas
+    "Netflix": 8,
+    "Max": 1899,
+    "Paramount+": 531,
+    "Prime Video": 9,
+    "Disney+": 337,
+    "Apple TV+": 350
+}
+
+# Configuração do tema escuro
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: black;
+        color: white;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Título do aplicativo
 st.title("👾 Escolhe ai gatinha 👾")
+
+# Sidebar para escolher plataformas
+st.sidebar.title("Plataformas de Streaming")
+plataforma_selecionada = st.sidebar.selectbox(
+    "Escolha uma plataforma:",
+    list(PLATAFORMAS.keys())
+)
+
+# Opção de busca por nome
+st.sidebar.title("Buscar por Nome")
+nome_busca = st.sidebar.text_input("Digite o nome do filme/série:")
+tipo_busca = st.sidebar.radio("Tipo:", ["Filme", "Série"])
 
 # Opção de escolha aleatória no centro da tela
 st.write("---")
@@ -166,59 +202,43 @@ st.header("🎲 Escolha Aleatória")
 # Escolher entre filme ou série
 tipo_aleatorio = st.radio("Escolha o tipo:", ["Filme", "Série"])
 
-# Botão para escolha aleatória geral
-if st.button("Escolher aleatoriamente"):
-    if tipo_aleatorio == "Filme":
-        # Busca filmes populares para escolha aleatória
-        url = f"{BASE_URL}/movie/popular"
-        params = {
-            "api_key": API_KEY,
-            "language": "pt-BR",
-            "page": random.randint(1, 100)  # Busca até 100 páginas
-        }
-        response = requests.get(url, params=params)
-        
-        if response.status_code == 200:
-            lista = response.json()["results"]
-            placeholder = st.empty()
-            roleta(lista, tipo_aleatorio, placeholder)
-        else:
-            st.error("Erro ao buscar filmes para escolha aleatória.")
-    else:
-        # Busca séries populares para escolha aleatória
-        url = f"{BASE_URL}/tv/popular"
-        params = {
-            "api_key": API_KEY,
-            "language": "pt-BR",
-            "page": random.randint(1, 100)  # Busca até 100 páginas
-        }
-        response = requests.get(url, params=params)
-        
-        if response.status_code == 200:
-            lista = response.json()["results"]
-            placeholder = st.empty()
-            roleta(lista, tipo_aleatorio, placeholder)
-        else:
-            st.error("Erro ao buscar séries para escolha aleatória.")
-
-st.write("---")
-
-# Opção de escolha aleatória por gênero
-st.header("🎲 Escolha Aleatória por Gênero")
+# Escolher um gênero
 genero_aleatorio = st.selectbox("Escolha um gênero:", list(GENEROS.keys()))
 
-# Botão para escolha aleatória por gênero
-if st.button(f"Escolher {genero_aleatorio} aleatoriamente"):
-    if tipo_aleatorio == "Filme":
-        lista = buscar_filmes_por_genero(GENEROS[genero_aleatorio])
+# Botão para escolha aleatória geral
+if st.button("Escolher aleatoriamente"):
+    if plataforma_selecionada == "Todas as Plataformas":
+        # Busca em todas as plataformas
+        if tipo_aleatorio == "Filme":
+            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], None)
+        else:
+            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], None)
     else:
-        lista = buscar_series_por_genero(GENEROS[genero_aleatorio])
+        # Busca na plataforma selecionada
+        if tipo_aleatorio == "Filme":
+            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada])
+        else:
+            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada])
     
     if lista:
         placeholder = st.empty()
         roleta(lista, tipo_aleatorio, placeholder)
     else:
-        st.warning("Nenhum item encontrado para este gênero.")
+        st.warning("Nenhum item encontrado para este gênero e plataforma.")
+
+# Botão para buscar por nome
+if nome_busca:
+    resultados = buscar_por_nome(nome_busca, tipo_busca)
+    if resultados:
+        st.write(f"### Resultados para '{nome_busca}':")
+        for item in resultados:
+            st.write(f"**{item.get('title' if tipo_busca == 'Filme' else 'name')}**")
+            if item.get("poster_path"):
+                st.image(f"https://image.tmdb.org/t/p/w500{item['poster_path']}", width=200)
+            st.write(item.get("overview"))
+            st.write("---")
+    else:
+        st.warning("Nenhum resultado encontrado.")
 
 st.write("---")
 
@@ -229,7 +249,10 @@ aba_generos = st.tabs(list(GENEROS.keys()))
 for i, genero_nome in enumerate(GENEROS.keys()):
     with aba_generos[i]:
         st.write(f"### Filmes de {genero_nome}")
-        filmes = buscar_filmes_por_genero(GENEROS[genero_nome])
+        if plataforma_selecionada == "Todas as Plataformas":
+            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], None)
+        else:
+            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], PLATAFORMAS[plataforma_selecionada])
         
         if filmes:
             for item in filmes:
@@ -239,4 +262,4 @@ for i, genero_nome in enumerate(GENEROS.keys()):
                 st.write(item.get("overview"))
                 st.write("---")
         else:
-            st.warning("Nenhum filme encontrado para este gênero.")
+            st.warning("Nenhum filme encontrado para este gênero e plataforma.")
