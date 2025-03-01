@@ -17,7 +17,7 @@ def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id, exclude_coun
         "with_watch_providers": plataforma_id,
         "watch_region": "BR",
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 1000)
+        "page": random.randint(1, 500)
     }
     
     # Adicionar filtro por países excluídos
@@ -47,7 +47,7 @@ def buscar_series_por_genero_e_plataforma(genero_id, plataforma_id, exclude_coun
         "with_watch_providers": plataforma_id,
         "watch_region": "BR",
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 1000)
+        "page": random.randint(1, 500)
     }
     
     # Adicionar filtro por países excluídos
