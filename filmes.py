@@ -8,17 +8,27 @@ API_KEY = "d78f9edcc46b81eeaaf33881876d449e"  # Substitua pela sua chave de API
 BASE_URL = "https://api.themoviedb.org/3"
 
 # Função para buscar filmes por gênero e plataforma
-def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id):
+def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id, exclude_countries=None, year_range=None):
     url = f"{BASE_URL}/discover/movie"
     params = {
         "api_key": API_KEY,
-        "language": "pt-BR",  # Para resultados em português
+        "language": "pt-BR",
         "with_genres": genero_id,
         "with_watch_providers": plataforma_id,
-        "watch_region": "BR",  # Filtra por provedores no Brasil
+        "watch_region": "BR",
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 200)  # Busca até 200 páginas
+        "page": random.randint(1, 5)
     }
+    
+    # Adicionar filtro por países excluídos
+    if exclude_countries:
+        params["without_original_country"] = ",".join(exclude_countries)
+    
+    # Adicionar filtro por intervalo de anos
+    if year_range:
+        params["primary_release_date.gte"] = f"{year_range[0]}-01-01"
+        params["primary_release_date.lte"] = f"{year_range[1]}-12-31"
+    
     response = requests.get(url, params=params)
     
     if response.status_code == 200:
@@ -28,17 +38,27 @@ def buscar_filmes_por_genero_e_plataforma(genero_id, plataforma_id):
         return []
 
 # Função para buscar séries por gênero e plataforma
-def buscar_series_por_genero_e_plataforma(genero_id, plataforma_id):
+def buscar_series_por_genero_e_plataforma(genero_id, plataforma_id, exclude_countries=None, year_range=None):
     url = f"{BASE_URL}/discover/tv"
     params = {
         "api_key": API_KEY,
-        "language": "pt-BR",  # Para resultados em português
+        "language": "pt-BR",
         "with_genres": genero_id,
         "with_watch_providers": plataforma_id,
-        "watch_region": "BR",  # Filtra por provedores no Brasil
+        "watch_region": "BR",
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 200)  # Busca até 200 páginas
+        "page": random.randint(1, 5)
     }
+    
+    # Adicionar filtro por países excluídos
+    if exclude_countries:
+        params["without_original_country"] = ",".join(exclude_countries)
+    
+    # Adicionar filtro por intervalo de anos
+    if year_range:
+        params["first_air_date.gte"] = f"{year_range[0]}-01-01"
+        params["first_air_date.lte"] = f"{year_range[1]}-12-31"
+    
     response = requests.get(url, params=params)
     
     if response.status_code == 200:
@@ -164,6 +184,20 @@ PLATAFORMAS = {
     "Apple TV+": 350
 }
 
+# Dicionário de países (códigos ISO 3166-1 alpha-2)
+PAISES = {
+    "Estados Unidos": "US",
+    "Brasil": "BR",
+    "Reino Unido": "GB",
+    "Canadá": "CA",
+    "França": "FR",
+    "Alemanha": "DE",
+    "Índia": "IN",
+    "Japão": "JP",
+    "Coreia do Sul": "KR",
+    "Austrália": "AU"
+}
+
 # Configuração do tema escuro
 st.markdown(
     """
@@ -190,6 +224,24 @@ plataforma_selecionada = st.sidebar.selectbox(
     list(PLATAFORMAS.keys())
 )
 
+# Sidebar para escolher países a excluir
+st.sidebar.title("Excluir Filmes/Séries de Países")
+paises_excluidos = st.sidebar.multiselect(
+    "Escolha os países a excluir:",
+    list(PAISES.keys())
+)
+
+# Sidebar para escolher intervalo de anos
+st.sidebar.title("Filtrar por Ano")
+ano_inicial = st.sidebar.number_input("Ano inicial:", min_value=1900, max_value=2023, value=2000)
+ano_final = st.sidebar.number_input("Ano final:", min_value=1900, max_value=2023, value=2023)
+
+# Converter países selecionados para códigos ISO
+exclude_countries = [PAISES[pais] for pais in paises_excluidos]
+
+# Definir intervalo de anos
+year_range = (ano_inicial, ano_final) if ano_inicial <= ano_final else None
+
 # Opção de busca por nome
 st.sidebar.title("Buscar por Nome")
 nome_busca = st.sidebar.text_input("Digite o nome do filme/série:")
@@ -208,17 +260,15 @@ genero_aleatorio = st.selectbox("Escolha um gênero:", list(GENEROS.keys()))
 # Botão para escolha aleatória geral
 if st.button("Escolher aleatoriamente"):
     if plataforma_selecionada == "Todas as Plataformas":
-        # Busca em todas as plataformas
         if tipo_aleatorio == "Filme":
-            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], None)
+            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], None, exclude_countries, year_range)
         else:
-            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], None)
+            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], None, exclude_countries, year_range)
     else:
-        # Busca na plataforma selecionada
         if tipo_aleatorio == "Filme":
-            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada])
+            lista = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada], exclude_countries, year_range)
         else:
-            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada])
+            lista = buscar_series_por_genero_e_plataforma(GENEROS[genero_aleatorio], PLATAFORMAS[plataforma_selecionada], exclude_countries, year_range)
     
     if lista:
         placeholder = st.empty()
@@ -250,9 +300,9 @@ for i, genero_nome in enumerate(GENEROS.keys()):
     with aba_generos[i]:
         st.write(f"### Filmes de {genero_nome}")
         if plataforma_selecionada == "Todas as Plataformas":
-            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], None)
+            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], None, exclude_countries, year_range)
         else:
-            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], PLATAFORMAS[plataforma_selecionada])
+            filmes = buscar_filmes_por_genero_e_plataforma(GENEROS[genero_nome], PLATAFORMAS[plataforma_selecionada], exclude_countries, year_range)
         
         if filmes:
             for item in filmes:
