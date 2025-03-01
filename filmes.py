@@ -3,6 +3,12 @@ import requests
 import random
 import time
 
+st.set_page_config(
+    layout="wide",
+    page_title="spotify songs"
+)
+
+
 # Configuração do fundo preto e cores dos textos/botões
 st.markdown(
     """
@@ -10,9 +16,6 @@ st.markdown(
     .stApp {
         background-color: black;
         color: white;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        color: white !important;
     }
     .stButton>button {
         color: white;
@@ -61,7 +64,7 @@ def buscar_filmes_por_genero(genero_id):
         "language": "pt-BR",  # Para resultados em português
         "with_genres": genero_id,
         "sort_by": "popularity.desc",
-        "page": random.randint(1, 100)  # Busca até 100 páginas
+        "page": random.randint(1, 100)  # Busca até 1005 páginas
     }
     response = requests.get(url, params=params)
     
